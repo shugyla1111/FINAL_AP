@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech to Text Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100vh;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 0; /* Set to 0 to remove space */
+            justify-content: space-between;
+        }
+        .container {
+            width: calc(50% - 10px);
+            background-color: #fff;
+            width: 45%;
+            margin: 0 auto;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 40px; /* Adjust this value to control space between the containers */
+        }
+        
+        textarea {
+            width: 45%;
+            height: 200px;
+            resize: none;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            margin-bottom: 10px;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button#stop {
+            background-color: #f44336;
+        }
+        input[type=file] {
+            margin-bottom: 10px; /* Space between the file input and the button */
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Speech to Text Converter</h1>
+    </div>
+    <div class="header">
+        <div class="container">
+            <h3>Record Your Audio</h3>
+            <textarea id="result" rows="5" cols="20"></textarea><br>
+            <button id="start">Start</button>
+            <button id="stop">Stop</button>
+        </div>
+        <div class="container">
+            <h3>Upload Audio File</h3>
+            <textarea id="result" rows="5" cols="20"></textarea><br>
+            <input type="file" id="audioFile" accept=".wav, .mp3">
+            <button id="upload">Upload</button>
+            <button id="stop">Stop</button>
+        </div>
+    </div>
+    <script>
+        const startButton = document.getElementById('start');
+const stopButton = document.getElementById('stop');
+const resultElement = document.getElementById('result');
+const audioFileInput = document.getElementById('audioFile');
+const uploadButton = document.getElementById('upload');
+
+const recognition = new webkitSpeechRecognition();
+
+recognition.lang = window.navigator.language;
+recognition.interimResults = true;
+
+startButton.addEventListener('click', () => {
+    recognition.start();
+});
+stopButton.addEventListener('click', () => {
+    recognition.stop();
+});
+uploadButton.addEventListener('click', () => {
+    recognition.stop();
+});
+
+recognition.addEventListener('result', (event) => {
+    const result = event.results[event.results.length - 1][0].transcript;
+    resultElement.textContent = result;
+});
+
+const axios = require('axios');
+
+uploadButton.addEventListener('click', async () => {
+    const file = audioFileInput.files[0];
+    if (!file) {
+        alert('Please select an audio file.');
+        return;
+    }
+    const formData = new FormData();
+    formData.append('audio', file);
+    formData.append('config', JSON.stringify({ encoding: 'LINEAR16', sampleRateHertz: 16000, languageCode: 'en-US' }));
+    try {
+        const response = await axios.post('https://speech.googleapis.com/v1/speech:recognize?key=YOUR_API_KEY', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+        const result = response.data.results[0].alternatives[0].transcript;
+        resultElement.textContent = result;
+    } catch (error) {
+        console.error(error);
+    }
+});
+    </script>
+</body>
+</html>
